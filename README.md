@@ -36,3 +36,8 @@ networks:
     external: true
 ```
 4. Access with a web browser on URL: http://[LOCAL IP]:8080
+
+Example:
+<img width="1296" height="1023" alt="image" src="https://github.com/user-attachments/assets/c19bdfff-6154-44b3-8a86-e35dfe0cbb6c" />
+
+Created with ChatGPT
