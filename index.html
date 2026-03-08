@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8">
+<title>System Monitor</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:40px;
+}
+
+canvas{
+max-width:1200px;
+}
+
+button{
+margin-right:8px;
+margin-top:8px;
+padding:6px 12px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>System Monitor (NPU / CPU / MEM)</h2>
+
+<canvas id="chart"></canvas>
+
+<br>
+
+<button onclick="setRange(600)">10 min</button>
+<button onclick="setRange(3600)">1 hour</button>
+<button onclick="setRange(7200)">2 hours</button>
+<button onclick="setRange(86400)">24 hours</button>
+<button onclick="setRange(604800)">1 week</button>
+
+<br><br>
+
+<button onclick="manualRefresh()">Refresh Page</button>
+<button onclick="exportCSV()">Export CSV</button>
+
+<script>
+
+let chart
+let currentRange=7200
+
+function formatDate(ts){
+
+let d=new Date(ts*1000)
+
+let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+let day=String(d.getDate()).padStart(2,'0')
+let month=months[d.getMonth()]
+let year=d.getFullYear()
+
+let h=String(d.getHours()).padStart(2,'0')
+let m=String(d.getMinutes()).padStart(2,'0')
+
+return `${day}-${month}-${year} ${h}:${m} JST`
+}
+
+
+async function loadData(){
+
+let r=await fetch(`/data?range=${currentRange}`)
+
+let data=await r.json()
+
+chart.data.labels=[]
+chart.data.datasets[0].data=[]
+chart.data.datasets[1].data=[]
+chart.data.datasets[2].data=[]
+
+data.forEach(p=>{
+
+chart.data.labels.push(formatDate(p[0]))
+
+chart.data.datasets[0].data.push(p[1])
+chart.data.datasets[1].data.push(p[2])
+chart.data.datasets[2].data.push(p[3])
+
+})
+
+chart.update()
+
+}
+
+
+function setRange(sec){
+
+currentRange=sec
+loadData()
+
+}
+
+
+function manualRefresh(){
+
+location.reload()
+
+}
+
+
+function exportCSV(){
+
+window.location='/export'
+
+}
+
+
+function init(){
+
+chart=new Chart(document.getElementById("chart"),{
+
+type:'line',
+
+data:{
+
+labels:[],
+
+datasets:[
+
+{
+label:'NPU (%)',
+data:[],
+borderColor:'red',
+borderWidth:2,
+pointRadius:0
+},
+
+{
+label:'CPU (%)',
+data:[],
+borderColor:'blue',
+borderWidth:2,
+pointRadius:0
+},
+
+{
+label:'MEM (%)',
+data:[],
+borderColor:'green',
+borderWidth:2,
+pointRadius:0
+}
+
+]
+
+},
+
+options:{
+
+animation:false,
+
+scales:{
+
+x:{
+ticks:{
+maxTicksLimit:15
+}
+},
+
+y:{
+min:0,
+max:100
+}
+
+},
+
+plugins:{
+zoom:{
+zoom:{
+wheel:{enabled:true},
+pinch:{enabled:true},
+mode:'x'
+},
+pan:{
+enabled:true,
+mode:'x'
+}
+}
+}
+
+}
+
+})
+
+loadData()
+
+setInterval(loadData,5000)
+
+}
+
+init()
+
+</script>
+
+</body>
+
+</html>
